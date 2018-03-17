@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+<head>
+	<meta charset="utf-8">
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.17.0/jquery.validate.js"></script>
+	<script>
+		//jquery validate remote - para requisições assíncronas cross domain
+		//https://stackoverflow.com/questions/2628413/jquery-validator-and-a-custom-rule-that-uses-ajax
+		//não disparar requisição onkeyup
+		//https://www.sitepoint.com/jquery-ajax-validation-remote-rule/
+		$().ready(function () {
+			//para adicionar regras dinamicamente tem que chamar o validate() primeiro
+			//#region teste
+			$("#teste").validate({
+				onkeyup: false
+			});
+			$("#cep").rules("add", {
+				remote: function () {
+					var r = {
+						url: "https://viacep.com.br/ws/" + $("#cep").val() + "/json/",
+						type: "get",
+						dataType: "json",
+						contentType: "application/json; charset=utf-8",
+						data: "",
+						dataFilter: function (obj) {
+							var response = JSON.parse(obj);
+							if (response.erro) {
+								$('#endereco').val('');
+								$('#cidade').val('');
+								$('#estado').val('');
+								return false;
+							}
+							else {
+								$('#endereco').val(response.logradouro);
+								$('#cidade').val(response.localidade);
+								$('#estado').val(response.uf);
+								return true;
+							}
+						}
+					};
+					return r;
+				},
+				messages: {
+					remote: "CEP inválido!"
+				}
+			});
+			//#endregion teste
+			//#region teste1
+			$("#teste1").validate({
+				onkeyup: false,
+				rules: {
+					cep1: {
+						remote: function () {
+							var r = {
+								url: "https://viacep.com.br/ws/" + $("#cep1").val() + "/json/",
+								type: "get",
+								dataType: "json",
+								contentType: "application/json; charset=utf-8",
+								data: "",
+								dataFilter: function (obj) {
+									var response = JSON.parse(obj);
+									if (response.erro) {
+										$('#endereco1').val('');
+										$('#cidade1').val('');
+										$('#estado1').val('');
+										return false;
+									}
+									else {
+										$('#endereco1').val(response.logradouro);
+										$('#cidade1').val(response.localidade);
+										$('#estado1').val(response.uf);
+										return true;
+									}
+								}
+							};
+							return r;
+						}
+					}
+				},
+				messages: {
+					cep1: "CEP Inválido!",
+				}
+			});
+			//#endregion teste1
+		});
+	</script>
+</head>
+
+<body>
+	<form id="teste">
+		<input type='text' id='cep' name='cep' placeholder="CEP">
+		<input type='text' id='endereco' name='endereco' placeholder='Endereço'>
+		<input type='text' id='cidade' name='cidade' placeholder='Cidade'>
+		<input type='text' id='estado' name='estado' placeholder='Estado'>
+	</form>
+
+	<form id="teste1">
+		<input type='text' id='cep1' name='cep1' placeholder="CEP">
+		<input type='text' id='endereco1' name='endereco1' placeholder='Endereço'>
+		<input type='text' id='cidade1' name='cidade1' placeholder='Cidade'>
+		<input type='text' id='estado1' name='estado1' placeholder='Estado'>
+	</form>
+</body>
+
+</html>
