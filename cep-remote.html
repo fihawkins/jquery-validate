@@ -5,13 +5,14 @@
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.17.0/jquery.validate.js"></script>
 	<script>
+		//Validação ViaCEP não funciona se passa valor diferente de 8 caracteres
 		//jquery validate remote - para requisições assíncronas cross domain
 		//https://stackoverflow.com/questions/2628413/jquery-validator-and-a-custom-rule-that-uses-ajax
 		//não disparar requisição onkeyup
 		//https://www.sitepoint.com/jquery-ajax-validation-remote-rule/
 		$().ready(function () {
 			//para adicionar regras dinamicamente tem que chamar o validate() primeiro
-			//#region teste
+			//#region teste - ViaCEP
 			$("#teste").validate({
 				onkeyup: false
 			});
@@ -46,7 +47,7 @@
 				}
 			});
 			//#endregion teste
-			//#region teste1
+			//#region teste1 - ViaCEP
 			$("#teste1").validate({
 				onkeyup: false,
 				rules: {
@@ -83,23 +84,84 @@
 				}
 			});
 			//#endregion teste1
+			//#region teste2 - Google Maps API
+			//Exemplo
+			//http://maps.google.com/maps/api/geocode/json?address=09760000&sensor=false
+			//Extraído de https://forum.imasters.com.br/topic/419966-resolvido%C2%A0google-map-busca-por-endere%C3%A7o-ou-cep/
+			//Filtrando array de objetos - expressões lambda, arrow functions?
+			//https://stackoverflow.com/questions/7364150/find-object-by-id-in-an-array-of-javascript-objects
+			function addressPart(components,type){
+				var part = components.find(x => x.types.indexOf(type) !== -1);
+				if(part)
+					return part.long_name 
+				return '';
+			}
+
+			$("#teste2").validate({
+				onkeyup: false,
+				rules: {
+					cep2: {
+						remote: function () {
+							var r = {
+								url: "http://maps.google.com/maps/api/geocode/json?address=" + $("#cep2").val() + "&sensor=false",
+								type: "get",
+								dataType: "json",
+								data: "",
+								dataFilter: function (obj) {
+									var response = JSON.parse(obj);
+									if (response.status === 'OK') {
+										var a = response.results;
+										//09750670 - CEP Av. Lucas Nogueira Garcês - não retorna rua
+										//09760000 - CEP Rua dos Vianas - retorna rua
+										//Se não há controle no padrão do retorno (com e sem rua) pode preencher campos de forma errada
+										var components = response.results[0].address_components;
+										$('#endereco2').val((addressPart(components,'route') + ' ' + addressPart(components,'sublocality_level_1')).trim());
+										$('#cidade2').val(addressPart(components,'administrative_area_level_2'));
+										$('#estado2').val(addressPart(components,'administrative_area_level_1'));
+										return true;
+									}
+									else {
+										$('#endereco2').val('');
+										$('#cidade2').val('');
+										$('#estado2').val('');
+										return false;
+									}
+								}
+							};
+							return r;
+						}
+					}
+				},
+				messages: {
+					cep2: "CEP Inválido!",
+				}
+			});
+			//#endregion teste2		
 		});
 	</script>
 </head>
 
 <body>
+	<h3>Adicionando validação dinamicamente - ViaCEP</h3><br>
 	<form id="teste">
 		<input type='text' id='cep' name='cep' placeholder="CEP">
 		<input type='text' id='endereco' name='endereco' placeholder='Endereço'>
 		<input type='text' id='cidade' name='cidade' placeholder='Cidade'>
 		<input type='text' id='estado' name='estado' placeholder='Estado'>
 	</form>
-
+	<h3>Validação tradicional - ViaCEP</h3><br>
 	<form id="teste1">
 		<input type='text' id='cep1' name='cep1' placeholder="CEP">
 		<input type='text' id='endereco1' name='endereco1' placeholder='Endereço'>
 		<input type='text' id='cidade1' name='cidade1' placeholder='Cidade'>
 		<input type='text' id='estado1' name='estado1' placeholder='Estado'>
+	</form>
+	<h3>Validação tradicional - Google Maps API</h3><br>
+	<form id="teste2">
+		<input type='text' id='cep2' name='cep2' placeholder="CEP">
+		<input type='text' id='endereco2' name='endereco2' placeholder='Endereço'>
+		<input type='text' id='cidade2' name='cidade2' placeholder='Cidade'>
+		<input type='text' id='estado2' name='estado2' placeholder='Estado'>
 	</form>
 </body>
 
